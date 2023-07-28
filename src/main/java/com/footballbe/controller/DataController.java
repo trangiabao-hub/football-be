@@ -51,7 +51,7 @@ public class DataController {
 
     @GetMapping("/fetch")
     public void fetchDataMatch() {
-        String matchDiaryUrl = hostServer + "/match/diary?user=" + apiUser + "&secret=" + apiSecret + "&date=20230728";
+        String matchDiaryUrl = hostServer + "/match/diary?user=" + apiUser + "&secret=" + apiSecret;
         ParameterizedTypeReference<APIResponse<List<Match>>> responseType = new ParameterizedTypeReference<APIResponse<List<Match>>>() {
         };
         ResponseEntity<APIResponse<List<Match>>> responseEntity = restTemplate.exchange(matchDiaryUrl, HttpMethod.GET, null, responseType);
