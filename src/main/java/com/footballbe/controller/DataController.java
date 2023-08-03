@@ -13,10 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -47,6 +44,11 @@ public class DataController {
                 .sorted(Comparator.comparingLong(Match::getMatch_time))
                 .collect(Collectors.toList());
         return new ResponseEntity(matchesResponseSorted, HttpStatus.OK);
+    }
+
+    @GetMapping("/matches2")
+    public ResponseEntity getMatches2() {
+        return new ResponseEntity(matches, HttpStatus.OK);
     }
 
     @GetMapping("/fetch")
@@ -88,19 +90,37 @@ public class DataController {
 
             Match match = matches.get(item.getId());
 
+
+
             if (match != null) {
                 int time = (int) (currentTime - match.getMatch_time()) / 60;
                 if (match != null && match.getStatistics() == null) {
                     List<TimeWithStatistic> statistics = new ArrayList<>();
                     match.setStatistics(statistics);
                 }
+                if(match.getHandicap() == -1000){
+                    String handicapUrl = hostServer + "odds/history?user=" + apiUser + "&secret=" + apiSecret + "&uuid=" + match.getId();
+                    ParameterizedTypeReference<APIResponse<Map<Integer, Map<String, List<List<Object>>>>>> responseHandicap = new ParameterizedTypeReference<APIResponse<Map<Integer, Map<String, List<List<Object>>>>>>() {};
+                    ResponseEntity<APIResponse<Map<Integer, Map<String, List<List<Object>>>>>> responseHandicapEntity = restTemplate.exchange(handicapUrl, HttpMethod.GET, null, responseHandicap);
+
+                    try{
+                        if(responseHandicapEntity.getBody().getResults() != null){
+                            match.setHandicap((double) responseHandicapEntity.getBody().getResults().get(2).get("asia").get(0).get(3));
+                            match.setScoreHome((int) responseHandicapEntity.getBody().getResults().get(2).get("asia").get(0).get(3));
+                            match.setHandicap((double) responseHandicapEntity.getBody().getResults().get(2).get("asia").get(0).get(3));
+                            System.out.println(responseHandicapEntity.getBody().getResults().get(2).get("asia").get(0).get(3));
+                        }
+                    }catch (Exception e){
+                    }
+                }
+
                 if (time == 4 && !checkTypeExist(match, TimeType.FOUR_MINUTES)) {
                     TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
                     timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
                     timeWithStatistic.setStatistics(item.getStats());
                     timeWithStatistic.setType(TimeType.FOUR_MINUTES);
                     match.getStatistics().add(timeWithStatistic);
-                    System.out.println("4 - "+match.getId());
+                    System.out.println("4 - " + match.getId());
                 }
                 if (time == 5 && !checkTypeExist(match, TimeType.FIVE_MINUTES)) {
                     TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
@@ -108,7 +128,7 @@ public class DataController {
                     timeWithStatistic.setStatistics(item.getStats());
                     timeWithStatistic.setType(TimeType.FIVE_MINUTES);
                     match.getStatistics().add(timeWithStatistic);
-                    System.out.println("5 - "+match.getId());
+                    System.out.println("5 - " + match.getId());
                 }
                 if (time == 8 && !checkTypeExist(match, TimeType.EIGHT_MINUTES)) {
                     TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
@@ -116,7 +136,7 @@ public class DataController {
                     timeWithStatistic.setStatistics(item.getStats());
                     timeWithStatistic.setType(TimeType.EIGHT_MINUTES);
                     match.getStatistics().add(timeWithStatistic);
-                    System.out.println("8 - "+match.getId());
+                    System.out.println("8 - " + match.getId());
                 }
                 if (time == 10 && !checkTypeExist(match, TimeType.TEN_MINUTES)) {
                     TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
@@ -124,9 +144,16 @@ public class DataController {
                     timeWithStatistic.setStatistics(item.getStats());
                     timeWithStatistic.setType(TimeType.TEN_MINUTES);
                     match.getStatistics().add(timeWithStatistic);
-                    System.out.println("10 - "+match.getId());
+                    System.out.println("10 - " + match.getId());
                 }
 
+
+                try{
+                    match.setScoreHome(((List<Integer>) item.getScore().get(2)).get(1));
+                    match.setScoreHome(((List<Integer>) item.getScore().get(3)).get(1));
+                }catch (Exception e){
+                    System.err.println(e.getMessage());
+                }
                 match.setUpdated_at((int) System.currentTimeMillis() / 1000);
             }
 

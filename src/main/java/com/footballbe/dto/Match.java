@@ -29,6 +29,9 @@ public class Match {
     private int updated_at;
     private MatchData.TeamData homeTeam;
     private MatchData.TeamData awayTeam;
+    private float handicap;
+
+
 
     private MatchData.CompetitionData competition;
 

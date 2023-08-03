@@ -7,4 +7,5 @@ import java.util.List;
 public class StatisticalResponse {
     String id;
     List<Statistic> stats;
+    List<Object> score;
 }

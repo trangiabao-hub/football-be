@@ -28,6 +28,10 @@ public class Match {
     private List<Integer> agg_score;
     private MatchData.Environment environment;
     private int updated_at;
+    private double handicap = -1000;
+    private int scoreHome;
+    private int scoreAway;
+
 
     Team homeTeam;
     Team awayTeam;
