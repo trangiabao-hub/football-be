@@ -21,5 +21,5 @@ public class UnderrafterValue {
     private long id;
 
     float handicap;
-    long value;
+    float value;
 }

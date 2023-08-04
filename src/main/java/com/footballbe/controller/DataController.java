@@ -149,8 +149,10 @@ public class DataController {
 
 
                 try{
+                    System.out.println(item.getScore().get(1));
+                    match.setMatchState((int) item.getScore().get(1));
                     match.setScoreHome(((List<Integer>) item.getScore().get(2)).get(1));
-                    match.setScoreHome(((List<Integer>) item.getScore().get(3)).get(1));
+                    match.setScoreAway(((List<Integer>) item.getScore().get(3)).get(1));
                 }catch (Exception e){
                     System.err.println(e.getMessage());
                 }

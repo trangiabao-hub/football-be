@@ -31,6 +31,7 @@ public class Match {
     private double handicap = -1000;
     private int scoreHome;
     private int scoreAway;
+    private int matchState;
 
 
     Team homeTeam;
