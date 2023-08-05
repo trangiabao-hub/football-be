@@ -1,18 +1,22 @@
 package com.footballbe.controller;
 
+import com.footballbe.dto.request.AccountRequest;
+import com.footballbe.entity.Account;
 import com.footballbe.enums.TimeType;
 import com.footballbe.object.*;
+import com.footballbe.repository.AccountRepository;
+import com.footballbe.service.EmailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,6 +36,12 @@ public class DataController {
 
     //    List<Match> matches = new ArrayList<>();
     HashMap<String, Match> matches = new HashMap<>();
+
+    @Autowired
+    EmailService emailService;
+
+    @Autowired
+    AccountRepository accountRepository;
 
     @GetMapping("/matches")
     public ResponseEntity getMatches() {
@@ -91,72 +101,78 @@ public class DataController {
             Match match = matches.get(item.getId());
 
 
-
             if (match != null) {
-                int time = (int) (currentTime - match.getMatch_time()) / 60;
                 if (match != null && match.getStatistics() == null) {
                     List<TimeWithStatistic> statistics = new ArrayList<>();
                     match.setStatistics(statistics);
                 }
-                if(match.getHandicap() == -1000){
+                if (match.getHandicap() == -1000) {
                     String handicapUrl = hostServer + "odds/history?user=" + apiUser + "&secret=" + apiSecret + "&uuid=" + match.getId();
-                    ParameterizedTypeReference<APIResponse<Map<Integer, Map<String, List<List<Object>>>>>> responseHandicap = new ParameterizedTypeReference<APIResponse<Map<Integer, Map<String, List<List<Object>>>>>>() {};
+                    ParameterizedTypeReference<APIResponse<Map<Integer, Map<String, List<List<Object>>>>>> responseHandicap = new ParameterizedTypeReference<APIResponse<Map<Integer, Map<String, List<List<Object>>>>>>() {
+                    };
                     ResponseEntity<APIResponse<Map<Integer, Map<String, List<List<Object>>>>>> responseHandicapEntity = restTemplate.exchange(handicapUrl, HttpMethod.GET, null, responseHandicap);
 
-                    try{
-                        if(responseHandicapEntity.getBody().getResults() != null){
+                    try {
+                        if (responseHandicapEntity.getBody().getResults() != null) {
                             match.setHandicap((double) responseHandicapEntity.getBody().getResults().get(2).get("asia").get(0).get(3));
                             match.setScoreHome((int) responseHandicapEntity.getBody().getResults().get(2).get("asia").get(0).get(3));
                             match.setHandicap((double) responseHandicapEntity.getBody().getResults().get(2).get("asia").get(0).get(3));
-                            System.out.println(responseHandicapEntity.getBody().getResults().get(2).get("asia").get(0).get(3));
                         }
-                    }catch (Exception e){
+                    } catch (Exception e) {
                     }
                 }
 
-                if (time == 4 && !checkTypeExist(match, TimeType.FOUR_MINUTES)) {
-                    TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
-                    timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
-                    timeWithStatistic.setStatistics(item.getStats());
-                    timeWithStatistic.setType(TimeType.FOUR_MINUTES);
-                    match.getStatistics().add(timeWithStatistic);
-                    System.out.println("4 - " + match.getId());
+                if (match.getActualStartTime() == 0) {
+                    match.setActualStartTime((int) item.getScore().get(4));
                 }
-                if (time == 5 && !checkTypeExist(match, TimeType.FIVE_MINUTES)) {
-                    TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
-                    timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
-                    timeWithStatistic.setStatistics(item.getStats());
-                    timeWithStatistic.setType(TimeType.FIVE_MINUTES);
-                    match.getStatistics().add(timeWithStatistic);
-                    System.out.println("5 - " + match.getId());
-                }
-                if (time == 8 && !checkTypeExist(match, TimeType.EIGHT_MINUTES)) {
-                    TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
-                    timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
-                    timeWithStatistic.setStatistics(item.getStats());
-                    timeWithStatistic.setType(TimeType.EIGHT_MINUTES);
-                    match.getStatistics().add(timeWithStatistic);
-                    System.out.println("8 - " + match.getId());
-                }
-                if (time == 10 && !checkTypeExist(match, TimeType.TEN_MINUTES)) {
-                    TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
-                    timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
-                    timeWithStatistic.setStatistics(item.getStats());
-                    timeWithStatistic.setType(TimeType.TEN_MINUTES);
-                    match.getStatistics().add(timeWithStatistic);
-                    System.out.println("10 - " + match.getId());
+
+                if (match.getActualStartTime() != 0) {
+                    Instant currentTimestamp = Instant.now();
+                    long unixTimestamp = currentTimestamp.getEpochSecond();
+                    int time = (int) (unixTimestamp - match.getActualStartTime()) / 60;
+                    if (time == 4 && !checkTypeExist(match, TimeType.FOUR_MINUTES)) {
+                        TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
+                        timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
+                        timeWithStatistic.setStatistics(item.getStats());
+                        timeWithStatistic.setType(TimeType.FOUR_MINUTES);
+                        match.getStatistics().add(timeWithStatistic);
+//                        System.out.println("4 - " + match.getId());
+                    }
+                    if (time == 5 && !checkTypeExist(match, TimeType.FIVE_MINUTES)) {
+                        TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
+                        timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
+                        timeWithStatistic.setStatistics(item.getStats());
+                        timeWithStatistic.setType(TimeType.FIVE_MINUTES);
+                        match.getStatistics().add(timeWithStatistic);
+//                        System.out.println("5 - " + match.getId());
+                    }
+                    if (time == 8 && !checkTypeExist(match, TimeType.EIGHT_MINUTES)) {
+                        TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
+                        timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
+                        timeWithStatistic.setStatistics(item.getStats());
+                        timeWithStatistic.setType(TimeType.EIGHT_MINUTES);
+                        match.getStatistics().add(timeWithStatistic);
+//                        System.out.println("8 - " + match.getId());
+                    }
+                    if (time == 10 && !checkTypeExist(match, TimeType.TEN_MINUTES)) {
+                        TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
+                        timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
+                        timeWithStatistic.setStatistics(item.getStats());
+                        timeWithStatistic.setType(TimeType.TEN_MINUTES);
+                        match.getStatistics().add(timeWithStatistic);
+//                        System.out.println("10 - " + match.getId());
+                    }
                 }
 
 
-                try{
-                    System.out.println(item.getScore().get(1));
+                try {
                     match.setMatchState((int) item.getScore().get(1));
                     match.setScoreHome(((List<Integer>) item.getScore().get(2)).get(1));
                     match.setScoreAway(((List<Integer>) item.getScore().get(3)).get(1));
-                }catch (Exception e){
+                } catch (Exception e) {
                     System.err.println(e.getMessage());
                 }
-                match.setUpdated_at((int) System.currentTimeMillis() / 1000);
+//                match.setUpdated_at((int) System.currentTimeMillis() / 1000);
             }
 
         }
@@ -172,6 +188,58 @@ public class DataController {
         }
 
         return false;
+    }
+
+
+    @PostMapping("mail/{matchId}/{type}")
+    public void sendMail(@PathVariable String matchId, @PathVariable String type) {
+        Match match = matches.get(matchId);
+
+        if (type.equals("5_Minutes") && match.isNotification1()) return;
+        if (type.equals("5-4_Minutes") && match.isNotification2()) return;
+        if (type.equals("10_Minutes") && match.isNotification3()) return;
+        if (type.equals("10-8_Minutes") && match.isNotification4()) return;
+
+        List<Account> accounts = accountRepository.findActiveAccount();
+        for (Account account : accounts) {
+            EmailDetail emailDetail = new EmailDetail();
+            emailDetail.setSubject(type);
+            emailDetail.setMsgBody(match.getId() + " - " + type + " - " + match.getHomeTeam().getName() + " vs " + match.getAwayTeam().getName());
+            emailDetail.setRecipient(account.getEmail());
+            if(!account.isCheck1() && type.equals("5_Minutes")){
+                continue;
+            }
+            if(!account.isCheck2() && type.equals("5-4_Minutes")){
+                continue;
+            }
+            if(!account.isCheck3() && type.equals("10_Minutes")){
+                continue;
+            }
+            if(!account.isCheck4() && type.equals("10-8_Minutes")){
+                continue;
+            }
+            System.out.println("send mail to " + account.getEmail());
+            emailService.sendSimpleMail(emailDetail);
+        }
+        if (type.equals("5_Minutes")) match.setNotification1(true);
+        if (type.equals("5-4_Minutes")) match.setNotification2(true);
+        if (type.equals("10_Minutes")) match.setNotification3(true);
+        if (type.equals("10-8_Minutes")) match.setNotification4(true);
+    }
+
+    @GetMapping("account")
+    public ResponseEntity getAccount(){
+        return new ResponseEntity(accountRepository.findAll(), HttpStatus.OK);
+    }
+
+    @PostMapping("account")
+    public ResponseEntity createAccount(@RequestBody Account account){
+        return new ResponseEntity(accountRepository.save(account), HttpStatus.OK);
+    }
+
+    @PutMapping("account")
+    public ResponseEntity updateAccount(@RequestBody AccountRequest accounts){
+        return new ResponseEntity(accountRepository.saveAll(accounts.getAccounts()), HttpStatus.OK);
     }
 
 

@@ -32,6 +32,12 @@ public class Match {
     private int scoreHome;
     private int scoreAway;
     private int matchState;
+    private int actualStartTime = 0;
+
+    private boolean notification1 = false;
+    private boolean notification2 = false;
+    private boolean notification3 = false;
+    private boolean notification4 = false;
 
 
     Team homeTeam;
