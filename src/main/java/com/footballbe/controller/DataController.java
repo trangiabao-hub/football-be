@@ -129,14 +129,15 @@ public class DataController {
                 if (match.getActualStartTime() != 0) {
                     Instant currentTimestamp = Instant.now();
                     long unixTimestamp = currentTimestamp.getEpochSecond();
-                    int time = (int) (unixTimestamp - match.getActualStartTime()) / 60;
+                    int time = (int) (currentTime - match.getActualStartTime()) / 60;
+                    System.out.println(match.getId()+" - "+time);
                     if (time == 4 && !checkTypeExist(match, TimeType.FOUR_MINUTES)) {
                         TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
                         timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
                         timeWithStatistic.setStatistics(item.getStats());
                         timeWithStatistic.setType(TimeType.FOUR_MINUTES);
                         match.getStatistics().add(timeWithStatistic);
-//                        System.out.println("4 - " + match.getId());
+                        System.out.println("4 - " + match.getId());
                     }
                     if (time == 5 && !checkTypeExist(match, TimeType.FIVE_MINUTES)) {
                         TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
@@ -144,7 +145,7 @@ public class DataController {
                         timeWithStatistic.setStatistics(item.getStats());
                         timeWithStatistic.setType(TimeType.FIVE_MINUTES);
                         match.getStatistics().add(timeWithStatistic);
-//                        System.out.println("5 - " + match.getId());
+                        System.out.println("5 - " + match.getId());
                     }
                     if (time == 8 && !checkTypeExist(match, TimeType.EIGHT_MINUTES)) {
                         TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
@@ -152,7 +153,7 @@ public class DataController {
                         timeWithStatistic.setStatistics(item.getStats());
                         timeWithStatistic.setType(TimeType.EIGHT_MINUTES);
                         match.getStatistics().add(timeWithStatistic);
-//                        System.out.println("8 - " + match.getId());
+                        System.out.println("8 - " + match.getId());
                     }
                     if (time == 10 && !checkTypeExist(match, TimeType.TEN_MINUTES)) {
                         TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
@@ -160,7 +161,7 @@ public class DataController {
                         timeWithStatistic.setStatistics(item.getStats());
                         timeWithStatistic.setType(TimeType.TEN_MINUTES);
                         match.getStatistics().add(timeWithStatistic);
-//                        System.out.println("10 - " + match.getId());
+                        System.out.println("10 - " + match.getId());
                     }
                 }
 
