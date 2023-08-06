@@ -123,14 +123,16 @@ public class DataController {
                 }
 
                 if (match.getActualStartTime() == 0) {
-                    match.setActualStartTime((int) item.getScore().get(4));
+                    item.setStats(item.getStats().stream().sorted(Comparator.comparing(Statistic::getType)).collect(Collectors.toList()));
+                    if((int) item.getScore().get(1) == 2 && item.getStats().size() > 2 && (item.getStats().get(8).getAway() != 0 || item.getStats().get(8).getHome() != 0)){
+                        match.setActualStartTime((int) currentTime);
+                    }
                 }
 
                 if (match.getActualStartTime() != 0) {
                     Instant currentTimestamp = Instant.now();
                     long unixTimestamp = currentTimestamp.getEpochSecond();
                     int time = (int) (currentTime - match.getActualStartTime()) / 60;
-                    System.out.println(match.getId()+" - "+time);
                     if (time == 4 && !checkTypeExist(match, TimeType.FOUR_MINUTES)) {
                         TimeWithStatistic timeWithStatistic = new TimeWithStatistic();
                         timeWithStatistic.setTime(System.currentTimeMillis() / 1000);
