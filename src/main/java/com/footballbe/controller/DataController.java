@@ -123,8 +123,10 @@ public class DataController {
                 }
 
                 if (match.getActualStartTime() == 0) {
+                    int time = (int) (currentTime - (int) item.getScore().get(4)) / 60;
                     item.setStats(item.getStats().stream().sorted(Comparator.comparing(Statistic::getType)).collect(Collectors.toList()));
-                    if((int) item.getScore().get(1) == 2 && item.getStats().size() > 2 && (item.getStats().get(8).getAway() != 0 || item.getStats().get(8).getHome() != 0)){
+                    if (time < 10 && (int) item.getScore().get(1) == 2 && item.getStats().size() >= 8 && (item.getStats().get(8).getAway() != 0 || item.getStats().get(8).getHome() != 0)) {
+                        System.out.println("Match "+ match.getId() +" start");
                         match.setActualStartTime((int) currentTime);
                     }
                 }
@@ -182,8 +184,17 @@ public class DataController {
         return new ResponseEntity(realTimeResponse, HttpStatus.OK);
     }
 
-    public boolean checkTypeExist(Match match, TimeType timeType) {
 
+    @DeleteMapping("matches")
+    public ResponseEntity deleteHistory() {
+        matches.forEach((id, match) -> {
+            match.setStatistics(new ArrayList<>());
+        });
+
+        return getMatches();
+    }
+
+    public boolean checkTypeExist(Match match, TimeType timeType) {
         for (TimeWithStatistic timeWithStatistic : match.getStatistics()) {
             if (timeWithStatistic.getType() == timeType) {
                 return true;
@@ -209,16 +220,16 @@ public class DataController {
             emailDetail.setSubject(type);
             emailDetail.setMsgBody(match.getId() + " - " + type + " - " + match.getHomeTeam().getName() + " vs " + match.getAwayTeam().getName());
             emailDetail.setRecipient(account.getEmail());
-            if(!account.isCheck1() && type.equals("5_Minutes")){
+            if (!account.isCheck1() && type.equals("5_Minutes")) {
                 continue;
             }
-            if(!account.isCheck2() && type.equals("5-4_Minutes")){
+            if (!account.isCheck2() && type.equals("5-4_Minutes")) {
                 continue;
             }
-            if(!account.isCheck3() && type.equals("10_Minutes")){
+            if (!account.isCheck3() && type.equals("10_Minutes")) {
                 continue;
             }
-            if(!account.isCheck4() && type.equals("10-8_Minutes")){
+            if (!account.isCheck4() && type.equals("10-8_Minutes")) {
                 continue;
             }
             System.out.println("send mail to " + account.getEmail());
@@ -231,17 +242,17 @@ public class DataController {
     }
 
     @GetMapping("account")
-    public ResponseEntity getAccount(){
+    public ResponseEntity getAccount() {
         return new ResponseEntity(accountRepository.findAll(), HttpStatus.OK);
     }
 
     @PostMapping("account")
-    public ResponseEntity createAccount(@RequestBody Account account){
+    public ResponseEntity createAccount(@RequestBody Account account) {
         return new ResponseEntity(accountRepository.save(account), HttpStatus.OK);
     }
 
     @PutMapping("account")
-    public ResponseEntity updateAccount(@RequestBody AccountRequest accounts){
+    public ResponseEntity updateAccount(@RequestBody AccountRequest accounts) {
         return new ResponseEntity(accountRepository.saveAll(accounts.getAccounts()), HttpStatus.OK);
     }
 
